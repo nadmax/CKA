@@ -92,6 +92,12 @@ controlplane:~$ k logs <pod-name> -c <container-name>  # for multi-container pod
 
 ## ConfigMap Usage
 
+### From Literal
+
+```sh
+controlplane:~$ k create configmap <name> --from-literal=<ENV>=<VALUE>
+```
+
 ### Mounting ConfigMap as Volume
 
 ```yml
@@ -129,6 +135,14 @@ env:
 ```sh
 controlplane:~$ k exec <pod-name> -- env | grep <ENV_VAR>
 controlplane:~$ k exec <pod-name> -- cat <mount-path>/<key-name>
+```
+
+## Secrets
+
+### From Literal
+
+```sh
+controlplane:~$ k create secret <secret-type> <name> --from-literal=<ENV>=<VALUE>
 ```
 
 ## Services and Ingress
@@ -440,6 +454,23 @@ controlplane:~$ kubeadm certs renew all
 controlplane:~$ kubeadm certs renew <certificate-name>
 ```
 
+## Metrics Server
+
+### Nodes
+
+```sh
+controlplane:~$ k top no # Show metrics for all nodes
+controlplane:~$ k top no <node-name> # Show metrics for specific node
+```
+
+### Pods
+
+```sh
+controlplane:~$ k top po <name> -- containers # Show metrics for pod and its containers
+controlplane:~$ k top po --sort-by=cpu # Sort by pods which are consuming the most CPU
+controlplane:~$ k top po --sort-by=memory # Sort by pods which are consuming the most memory
+```
+
 ## Static Pods
 
 Static pods are managed by kubelet directly from manifest files.
@@ -458,4 +489,24 @@ controlplane:~$ vim <pod-manifest>
 
 # Move to Kubernetes manifests directory
 controlplane:~$ mv <pod-manifest> /etc/kubernetes/manifests/
+```
+
+## Helm
+
+```sh
+controlplane:~$ helm version # Verify if Helm is installed and check version
+controlplane:~$ helm repo add <repo-name> <url> # Add Helm repository
+controlplane:~$ helm repo update # Update repository to fetch the latest chart information
+controlplane:~$ helm search repo <repo-name> # Search for available repository charts
+controlplane:~$ helm show chart <repo-name>/<chart> # Get detailed information about a chart
+controlplane:~$ helm show values <repo-name>/<chart> # View the default values for a chart
+controlplane:~$ helm repo list # List the configured repositories
+controlplane:~$ helm list -A # List all Helm releases
+controlplane:~$ helm install <release-name> <repo-name>/<chart> --namespace <namespace> # Install chart in a namespace
+controlplane:~$ helm history <name> -n <namespace> # Get the release history
+controlplane:~$ helm get manifest <release-name> -n <namespace> # View generated Kubernetes manifests
+controlplane:~$ helm rollback <release-name> <revision-number> -n <namespace> # Rollback to a previous revision
+controlplane:~$ helm status <release-name> -n <namespace> # Check release installation status
+controlplane:~$ helm get values <release-name> -n <namespace> # Get values for a current release
+controlplane:~$ helm get all <release-name> -n <namespace> # Get all information about a release
 ```
