@@ -344,6 +344,21 @@ spec:
     image: <image>
 ```
 
+### NodeName
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+  namespace: <namespace>
+spec:
+  containers:
+  - image: <image>
+    name: <container-name>
+  nodeName: <node-name>
+```
+
 ### Pod Affinity
 
 ```yml
