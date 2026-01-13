@@ -559,3 +559,134 @@ controlplane:~$ helm status <release-name> -n <namespace> # Check release instal
 controlplane:~$ helm get values <release-name> -n <namespace> # Get values for a current release
 controlplane:~$ helm get all <release-name> -n <namespace> # Get all information about a release
 ```
+
+## Kustomize
+
+Example of a basic `kustomization.yaml`
+
+```yml
+resources:
+- deployment.yaml
+- service.yaml
+labels:
+    env: dev
+    team: platform
+```
+
+### Overlays
+
+#### With patchesStrategyMerge
+
+```sh
+controlplane:~$ 
+.
+|-- base
+|   |-- deployment.yaml
+|   |-- kustomization.yaml
+|   `-- service.yaml
+`-- overlays
+    |-- dev
+    |   |-- kustomization.yaml
+    |   `-- patch-deployment.yaml
+    `-- prod
+        |-- kustomization.yaml
+        `-- patch-deployment.yaml
+```
+
+`overlays/prod/kustomization.yaml`
+
+```yml
+resources:
+- ../../base
+patchesStrategyMerge:
+- patch-deployment
+
+namePrefix: -prod
+namespace: prod
+```
+
+`overlays/prod/patch-deployment.yaml`
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+        - name: my-app
+          image: my-app:prod
+          env:
+            - name: ENV
+              value: "production"
+```
+
+#### With images
+
+```yml
+resources:
+- ../../base
+images:
+- name: nginx
+  newTag: "1.23"
+```
+
+### ConfigMapGenerator
+
+```yml
+configMapGenerator:
+- name: configmap
+  files:
+  - application.properties
+```
+
+### SecretGenerator
+
+```yml
+secretGenerator:
+- name: secret
+  files:
+  - password.txt
+```
+
+## Rollback
+
+```sh
+controlplane:~$ k set image deployment <deploy-name> <image>=<image> <image>=<image>:<tag> # Change the image of our deployment
+controlplane:~$ k rollout history deploy apache # View rollout history
+controlplane:~$ k rollout undo deploy apache # Roll back to a previous version
+controlplane:~$ k rollout status deploy apache # View rollout status
+```
+
+## Rollout Strategy
+
+```yml
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: source-ip-app
+  strategy:
+    ## rollingUpdate:
+      ## maxSurge: 25%
+        ## maxUnavailable: 25%
+    ## type: RollingUpdate
+    type: Recreate
+```
+
+```sh
+controlplane:~$  get deploy <deploy-name> -oyaml | grep strategy -A3 # Verify that changes were successful
+```
+
+## Cordon and Drain
+
+```sh
+controlplane:~$ k cordon <node-name> # Mark node as unschedulable
+controlplane:~$ k drain <node-name> --ignore-daemonsets # Evict all pods currently running on node (without --ignore-daemonsets, an error occurred)
+controlplane:~$ k uncordon <node-name> # Enable scheduling
+```
