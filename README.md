@@ -415,6 +415,12 @@ controlplane:~$ k exec <pod-name> -- cat <mount-path>/<key-name>
 controlplane:~$ k create secret <secret-type> <name> --from-literal=<ENV>=<VALUE>
 ```
 
+#### From File
+
+```sh
+controlplane:~$ k create secret <secret-type> <name> --from-file=<file_path>
+```
+
 #### Service Account Token
 
 ```yml
@@ -428,6 +434,12 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
+#### Decoded an Existing Secret
+
+```sh
+controlplane:~$ k -n <namespace-name> get secrets <secret-name> -ojsonpath='{.data.SECRET_NAME}' | base64 -d
+```
+
 ---
 
 ## 7. Networking
@@ -438,6 +450,14 @@ type: kubernetes.io/service-account-token
 
 ```sh
 controlplane:~$ k create service clusterip <service-name> --tcp=<port>:<target-port> -n <namespace>
+```
+
+#### Expose
+
+```sh
+controlplane:~$ k expose pod <pod-name> --port=<port> --name=<service-name> # Create a service for a pod, which serves on a specific port with a specific name
+controlplane:~$ k expose rs <rs-name> --port=<port> --target-port=<target-port> --name=<service-name> # Create a service for a replicaset
+controlplane:~$ k expose deployment <deploy-name> --port=<port> --target-port=<target-port> --name=<service-name> # Create a service for a deployment
 ```
 
 ### Ingress Resource
