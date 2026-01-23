@@ -783,7 +783,7 @@ controlplane:~$ helm rollback <release-name> <revision-number> -n <namespace> # 
 controlplane:~$ helm status <release-name> -n <namespace> # Check release installation status
 controlplane:~$ helm get values <release-name> -n <namespace> # Get values for a current release
 controlplane:~$ helm get all <release-name> -n <namespace> # Get all information about a release
-controlplane:~$ helm template <release-name> <repo-name>/<chart> -n <namespace> --version=<version> --values=values.yaml > install.yaml # Generate manifests with a specific version and save it to file
+controlplane:~$ helm template <release-name> <repo-name>/<chart> -n <namespace> --version=<version> > install.yaml # Generate manifests with a specific version and save it to file
 ```
 
 ### Kustomize
