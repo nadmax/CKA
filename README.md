@@ -236,6 +236,90 @@ spec:
 
 ## 5. Pod Scheduling
 
+### Traditional Sidecar Container
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+  namespace: <namespace>
+spec:
+  containers:
+  - name: <main-container-name>
+    image: <main-image>
+    command: ['sh', '-c', 'while true; do echo "logging" >> /opt/logs.txt; sleep 1; done']
+    volumeMounts:
+    - name: <shared-volume-name>
+      mountPath: /opt
+  - name: <sidecar-container-name>
+    image: <sidecar-image>
+    command: ['sh', '-c', 'tail -F /opt/logs.txt']
+    volumeMounts:
+    - name: <shared-volume-name>
+      mountPath: /opt
+  volumes:
+  - name: <shared-volume-name>
+    emptyDir: {}
+```
+
+### Sidecar in initContainers
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+  namespace: <namespace>
+spec:
+  initContainers:
+  - name: <sidecar-container-name>
+    image: <sidecar-image>
+    restartPolicy: Always  # Key difference - makes it a sidecar
+    command: ['sh', '-c', 'tail -F /opt/logs.txt']
+    volumeMounts:
+    - name: <shared-volume-name>
+      mountPath: /opt
+  containers:
+  - name: <main-container-name>
+    image: <main-image>
+    command: ['sh', '-c', 'while true; do echo "logging" >> /opt/logs.txt; sleep 1; done']
+    volumeMounts:
+    - name: <shared-volume-name>
+      mountPath: /opt
+  volumes:
+  - name: <shared-volume-name>
+    emptyDir: {}
+```
+
+### Init Container
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+  namespace: <namespace>
+spec:
+  initContainers:
+  - name: <init-container-name>
+    image: <init-image>
+    command: ['sh', '-c', 'echo "setup complete" > /opt/config.txt']
+    volumeMounts:
+    - name: <shared-volume-name>
+      mountPath: /opt
+  containers:
+  - name: <main-container-name>
+    image: <main-image>
+    command: ['sh', '-c', 'cat /opt/config.txt && sleep 3600']
+    volumeMounts:
+    - name: <shared-volume-name>
+      mountPath: /opt
+  volumes:
+  - name: <shared-volume-name>
+    emptyDir: {}
+```
+
 ### NodeName
 
 ```yml
