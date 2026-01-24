@@ -49,104 +49,7 @@ This sets: `expandtab`, `tabstop=2`, `shiftwidth=2` and `line numbers`
 
 ---
 
-## 2. Cluster Architecture and Management
-
-### Initialize Cluster
-
-```sh
-controlplane:~$ kubeadm init \
-  --kubernetes-version <version> \
-  --pod-network-cidr <cidr>
-```
-
-### Join Node to Cluster
-
-```sh
-controlplane:~$ kubeadm token create --print-join-command
-<worker-node-name>:~$ # copy/paste the output of 'kubeadm token create' command
-```
-
-### Cluster Upgrade
-
-#### Upgrade Controlplane
-
-```sh
-# Check for new version available
-controlplane:~$ kubeadm upgrade plan
-
-# Apply upgrade
-controlplane:~$ kubeadm upgrade apply <version>
-
-# Upgrade kubelet and kubectl
-controlplane:~$ apt install -y kubelet=<version> kubectl=<version>
-```
-
-#### Upgrade Worker Node
-
-```sh
-controlplane:~$ ssh <worker-node-name>
-
-# Upgrade kubeadm first with the upgraded version
-<worker-node-name>:~$ apt install kubeadm=<version>
-
-# Upgrade worker node
-<worker-node-name>:~$ kubeadm upgrade node
-
-# Upgrade kubelet and kubectl
-<worker-node-name>:~$ apt install -y kubelet=<version> kubectl=<version>
-```
-
-### Certificate Management
-
-#### Check Certificate Expiration
-
-```sh
-controlplane:~$ kubeadm certs check-expiration
-```
-
-#### Renew Certificates
-
-```sh
-# Renew all certificates
-controlplane:~$ kubeadm certs renew all
-
-# Renew specific certificate
-controlplane:~$ kubeadm certs renew <certificate-name>
-```
-
----
-
-## 3. Control Plane Components
-
-### API Server
-
-```sh
-controlplane:~$ vim /etc/kubernetes/manifests/kube-apiserver.yaml
-```
-
-Check for invalid options or misconfigurations in the static pod manifest.
-
-### Kube Controller Manager
-
-```sh
-controlplane:~$ vim /etc/kubernetes/manifests/kube-controller-manager.yaml
-```
-
-Verify configuration flags and ensure all options are valid.
-
-### Kubelet
-
-```sh
-controlplane:~$ vim /var/lib/kubelet/config.yaml
-# or check environment file
-controlplane:~$ vim /var/lib/kubeadm-flags.env
-```
-
-Review kubelet configuration and check for invalid flags.
-
----
-
-## 4. Workload Management
+## 2. Workload Management
 
 ### Rollback and Rollout
 
@@ -234,7 +137,363 @@ spec:
 
 ---
 
-## 5. Pod Scheduling
+## 3. Configuration
+
+### ConfigMap Usage
+
+#### From Literal
+
+```sh
+controlplane:~$ k create configmap <name> --from-literal=<ENV>=<VALUE>
+```
+
+#### Mounting ConfigMap as Volume
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+  namespace: <namespace>
+spec:
+  volumes:
+  - name: <volume-name>
+    configMap:
+      name: <configmap-name>
+  containers:
+  - image: <image>
+    name: <container-name>
+    volumeMounts:
+    - name: <volume-name>
+      mountPath: <mount-path>
+```
+
+#### Using ConfigMap as Environment Variables
+
+```yml
+env:
+- name: <ENV_VAR_NAME>
+  valueFrom:
+    configMapKeyRef:
+      name: <configmap-name>
+      key: <key-name>
+```
+
+#### Verify ConfigMap Data
+
+```sh
+controlplane:~$ k exec <pod-name> -- env | grep <ENV_VAR>
+controlplane:~$ k exec <pod-name> -- cat <mount-path>/<key-name>
+```
+
+### Secrets
+
+#### From Literal
+
+```sh
+controlplane:~$ k create secret <secret-type> <name> --from-literal=<ENV>=<VALUE>
+```
+
+#### From File
+
+```sh
+controlplane:~$ k create secret <secret-type> <name> --from-file=<file_path>
+```
+
+#### Service Account Token
+
+```yml
+apiVersion: v1
+kind: Secret
+metadata:
+    name: <secret-name>
+    namespace: <namespace-name>
+    annotations:
+        kubernetes.io/service-account.name: "<sa-name>"
+type: kubernetes.io/service-account-token
+```
+
+#### Using Secret as Volume
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+spec:
+  containers:
+    - name: <container-name>
+      image: <image-name>
+      volumeMounts:
+        - name: <volume-name>
+          mountPath: <path>
+          readOnly: true
+  volumes:
+    - name: <volume-name>
+      secret:
+        secretName: <secret-name>
+```
+
+#### Using Secret as Environment Variables
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+spec:
+  containers:
+    - name: <container-name>
+      image: <image-name>
+      env:
+      - name: <ENV_VAR_NAME>
+        valueFrom:
+          secretKeyRef:
+            key: <key-name>
+            name: <secret-name>
+      - name: <ENV_VAR_NAME>
+        valueFrom:
+          secretKeyRef:
+            key: <key-name>
+            name: <secret-name>
+      - name: <ENV_VAR_NAME>
+        valueFrom:
+          secretKeyRef:
+            key: <key-name>
+            name: <secret-name>
+```
+
+#### Decoded an Existing Secret
+
+```sh
+controlplane:~$ k -n <namespace-name> get secrets <secret-name> -ojsonpath='{.data.SECRET_NAME}' | base64 -d
+```
+
+---
+
+## 4. Storage
+
+### StorageClass
+
+```yml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+    name: <storage-class-name>
+provisioner: <provisioner-name>
+reclaimPolicy: Retain
+```
+
+### PV and PVC
+
+```yml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: <pv-name>
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "local-path"
+  persistentVolumeReclaimPolicy: Delete # Can be Recycle or Retain too
+  hostPath:
+    path: "<path>"
+```
+
+```yml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: <pvc-name>
+spec:
+  resources:
+    requests:
+      storage: 1Gi
+  accessModes:
+    - ReadWriteOnce 
+  storageClassName: "local-path"
+  volumeName: <pv-name>
+```
+
+Pod with PVC:
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+spec:
+  containers:
+    - name: <container-name>
+      image: <image-name>
+      volumeMounts:
+        - mountPath: "<path>"
+          name: <volume-name>
+  volumes:
+    - name: <volume-name>
+      persistentVolumeClaim:
+        claimName: <pvc-name>
+```
+
+### NFS Volume
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+spec:
+  containers:
+    - name: <container-name>
+      image: <image-name>
+      command: [ 'sh', '-c', 'while true; do echo "some text" >> /data/test; sleep 3600; done' ]
+      volumeMounts:
+        - name: <volume-name>
+          mountPath: <path>
+  volumes:
+    - name: <volume-name>
+      nfs:
+        server: <ip-address>
+        path: <path>
+        readOnly: no
+```
+
+---
+
+## 5. Networking
+
+### Services
+
+#### Create ClusterIP Service
+
+```sh
+controlplane:~$ k create service clusterip <service-name> --tcp=<port>:<target-port> -n <namespace>
+```
+
+#### Expose
+
+```sh
+controlplane:~$ k expose pod <pod-name> --port=<port> --name=<service-name> # Create a service for a pod, which serves on a specific port with a specific name
+controlplane:~$ k expose rs <rs-name> --port=<port> --target-port=<target-port> --name=<service-name> # Create a service for a replicaset
+controlplane:~$ k expose deployment <deploy-name> --port=<port> --target-port=<target-port> --name=<service-name> # Create a service for a deployment
+```
+
+### Ingress Resource
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: <ingress-name>
+  namespace: <namespace>
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx # Uses nginx implementation
+  rules:
+  - host: "<hostname>"
+    http:
+      paths:
+      - path: /<path>
+        pathType: Prefix
+        backend:
+          service:
+            name: <service-name>
+            port:
+              number: <port>
+```
+
+### Gateway and HTTPRoute
+
+```yml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: <gateway-name>
+  namespace: <name>
+spec:
+  gatewayClassName: nginx # Uses nginx implementation
+  listeners:
+  - protocol: HTTP
+    port: 80
+    name: <name>
+```
+
+```yml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: web-route
+spec:
+  parentRefs:
+  - name: my-gateway
+  rules:
+  - matches:
+    - path: # Uses a path-based routing
+        type: PathPrefix
+        value: /
+    backendRefs: # References web service
+    - name: web
+      port: 80
+```
+
+### Network Policies
+
+#### Egress Policy Template
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: <policy-name>
+  namespace: <namespace>
+spec:
+  podSelector:
+    matchLabels:
+      <key>: <value>  # {} for all pods
+  policyTypes:
+  - Egress
+  egress:
+  - ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          <label-key>: <label-value>
+```
+
+#### Ingress Policy Template
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: <policy-name>
+  namespace: <namespace>
+spec:
+  podSelector:
+    matchLabels:
+      <key>: <value>  # {} for all pods
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          <label-key>: <label-value>
+    - podSelector:
+        matchLabels:
+          <label-key>: <label-value>
+```
+
+---
+
+## 6. Pod Scheduling
 
 ### Traditional Sidecar Container
 
@@ -442,267 +701,33 @@ spec:
 
 ---
 
-## 6. Configuration
+## 7. Resource Management and Monitoring
 
-### ConfigMap Usage
-
-#### From Literal
+### Find Pods by QoS Class
 
 ```sh
-controlplane:~$ k create configmap <name> --from-literal=<ENV>=<VALUE>
+# Find BestEffort pods (first to be evicted)
+controlplane:~$ k get pods -A -o yaml | grep -i besteffort
+
+# Find Burstable or Guaranteed
+controlplane:~$ k get pods -A -o yaml | grep -i "burstable\|guaranteed"
 ```
 
-#### Mounting ConfigMap as Volume
+### Metrics Server
 
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: <pod-name>
-  namespace: <namespace>
-spec:
-  volumes:
-  - name: <volume-name>
-    configMap:
-      name: <configmap-name>
-  containers:
-  - image: <image>
-    name: <container-name>
-    volumeMounts:
-    - name: <volume-name>
-      mountPath: <mount-path>
-```
-
-#### Using ConfigMap as Environment Variables
-
-```yml
-env:
-- name: <ENV_VAR_NAME>
-  valueFrom:
-    configMapKeyRef:
-      name: <configmap-name>
-      key: <key-name>
-```
-
-#### Verify ConfigMap Data
+#### Nodes
 
 ```sh
-controlplane:~$ k exec <pod-name> -- env | grep <ENV_VAR>
-controlplane:~$ k exec <pod-name> -- cat <mount-path>/<key-name>
+controlplane:~$ k top no # Show metrics for all nodes
+controlplane:~$ k top no <node-name> # Show metrics for specific node
 ```
 
-### Secrets
-
-#### From Literal
+#### Pods
 
 ```sh
-controlplane:~$ k create secret <secret-type> <name> --from-literal=<ENV>=<VALUE>
-```
-
-#### From File
-
-```sh
-controlplane:~$ k create secret <secret-type> <name> --from-file=<file_path>
-```
-
-#### Service Account Token
-
-```yml
-apiVersion: v1
-kind: Secret
-metadata:
-    name: <secret-name>
-    namespace: <namespace-name>
-    annotations:
-        kubernetes.io/service-account.name: "<sa-name>"
-type: kubernetes.io/service-account-token
-```
-
-#### Using Secret as Volume
-
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: <pod-name>
-spec:
-  containers:
-    - name: <container-name>
-      image: <image-name>
-      volumeMounts:
-        - name: <volume-name>
-          mountPath: <path>
-          readOnly: true
-  volumes:
-    - name: <volume-name>
-      secret:
-        secretName: <secret-name>
-```
-
-#### Using Secret as Environment Variables
-
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: <pod-name>
-spec:
-  containers:
-    - name: <container-name>
-      image: <image-name>
-      env:
-      - name: <ENV_VAR_NAME>
-        valueFrom:
-          secretKeyRef:
-            key: <key-name>
-            name: <secret-name>
-      - name: <ENV_VAR_NAME>
-        valueFrom:
-          secretKeyRef:
-            key: <key-name>
-            name: <secret-name>
-      - name: <ENV_VAR_NAME>
-        valueFrom:
-          secretKeyRef:
-            key: <key-name>
-            name: <secret-name>
-```
-
-#### Decoded an Existing Secret
-
-```sh
-controlplane:~$ k -n <namespace-name> get secrets <secret-name> -ojsonpath='{.data.SECRET_NAME}' | base64 -d
-```
-
----
-
-## 7. Networking
-
-### Services
-
-#### Create ClusterIP Service
-
-```sh
-controlplane:~$ k create service clusterip <service-name> --tcp=<port>:<target-port> -n <namespace>
-```
-
-#### Expose
-
-```sh
-controlplane:~$ k expose pod <pod-name> --port=<port> --name=<service-name> # Create a service for a pod, which serves on a specific port with a specific name
-controlplane:~$ k expose rs <rs-name> --port=<port> --target-port=<target-port> --name=<service-name> # Create a service for a replicaset
-controlplane:~$ k expose deployment <deploy-name> --port=<port> --target-port=<target-port> --name=<service-name> # Create a service for a deployment
-```
-
-### Ingress Resource
-
-```yml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: <ingress-name>
-  namespace: <namespace>
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-spec:
-  ingressClassName: nginx # Uses nginx implementation
-  rules:
-  - host: "<hostname>"
-    http:
-      paths:
-      - path: /<path>
-        pathType: Prefix
-        backend:
-          service:
-            name: <service-name>
-            port:
-              number: <port>
-```
-
-### Gateway and HTTPRoute
-
-```yml
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: <gateway-name>
-  namespace: <name>
-spec:
-  gatewayClassName: nginx # Uses nginx implementation
-  listeners:
-  - protocol: HTTP
-    port: 80
-    name: <name>
-```
-
-```yml
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: web-route
-spec:
-  parentRefs:
-  - name: my-gateway
-  rules:
-  - matches:
-    - path: # Uses a path-based routing
-        type: PathPrefix
-        value: /
-    backendRefs: # References web service
-    - name: web
-      port: 80
-```
-
-### Network Policies
-
-#### Egress Policy Template
-
-```yml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: <policy-name>
-  namespace: <namespace>
-spec:
-  podSelector:
-    matchLabels:
-      <key>: <value>  # {} for all pods
-  policyTypes:
-  - Egress
-  egress:
-  - ports:
-    - protocol: TCP
-      port: 53
-    - protocol: UDP
-      port: 53
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          <label-key>: <label-value>
-```
-
-#### Ingress Policy Template
-
-```yml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: <policy-name>
-  namespace: <namespace>
-spec:
-  podSelector:
-    matchLabels:
-      <key>: <value>  # {} for all pods
-  policyTypes:
-  - Ingress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          <label-key>: <label-value>
-    - podSelector:
-        matchLabels:
-          <label-key>: <label-value>
+controlplane:~$ k top po <name> -- containers # Show metrics for pod and its containers
+controlplane:~$ k top po --sort-by=cpu # Sort by pods which are consuming the most CPU
+controlplane:~$ k top po --sort-by=memory # Sort by pods which are consuming the most memory
 ```
 
 ---
@@ -757,125 +782,100 @@ controlplane:~$ k auth can-i <verb> <resource> \
 
 ---
 
-## 9. Storage
+## 9. Cluster Architecture and Management
 
-### StorageClass
+### Initialize Cluster
 
-```yml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-    name: <storage-class-name>
-provisioner: <provisioner-name>
-reclaimPolicy: Retain
+```sh
+controlplane:~$ kubeadm init \
+  --kubernetes-version <version> \
+  --pod-network-cidr <cidr>
 ```
 
-### PV and PVC
+### Join Node to Cluster
 
-```yml
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: <pv-name>
-spec:
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: "local-path"
-  persistentVolumeReclaimPolicy: Delete # Can be Recycle or Retain too
-  hostPath:
-    path: "<path>"
+```sh
+controlplane:~$ kubeadm token create --print-join-command
+<worker-node-name>:~$ # copy/paste the output of 'kubeadm token create' command
 ```
 
-```yml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: <pvc-name>
-spec:
-  resources:
-    requests:
-      storage: 1Gi
-  accessModes:
-    - ReadWriteOnce 
-  storageClassName: "local-path"
-  volumeName: <pv-name>
+### Cluster Upgrade
+
+#### Upgrade Controlplane
+
+```sh
+# Check for new version available
+controlplane:~$ kubeadm upgrade plan
+
+# Apply upgrade
+controlplane:~$ kubeadm upgrade apply <version>
+
+# Upgrade kubelet and kubectl
+controlplane:~$ apt install -y kubelet=<version> kubectl=<version>
 ```
 
-Pod with PVC:
+#### Upgrade Worker Node
 
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: <pod-name>
-spec:
-  containers:
-    - name: <container-name>
-      image: <image-name>
-      volumeMounts:
-        - mountPath: "<path>"
-          name: <volume-name>
-  volumes:
-    - name: <volume-name>
-      persistentVolumeClaim:
-        claimName: <pvc-name>
+```sh
+controlplane:~$ ssh <worker-node-name>
+
+# Upgrade kubeadm first with the upgraded version
+<worker-node-name>:~$ apt install kubeadm=<version>
+
+# Upgrade worker node
+<worker-node-name>:~$ kubeadm upgrade node
+
+# Upgrade kubelet and kubectl
+<worker-node-name>:~$ apt install -y kubelet=<version> kubectl=<version>
 ```
 
-### NFS Volume
+### Certificate Management
 
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: <pod-name>
-spec:
-  containers:
-    - name: <container-name>
-      image: <image-name>
-      command: [ 'sh', '-c', 'while true; do echo "some text" >> /data/test; sleep 3600; done' ]
-      volumeMounts:
-        - name: <volume-name>
-          mountPath: <path>
-  volumes:
-    - name: <volume-name>
-      nfs:
-        server: <ip-address>
-        path: <path>
-        readOnly: no
+#### Check Certificate Expiration
+
+```sh
+controlplane:~$ kubeadm certs check-expiration
+```
+
+#### Renew Certificates
+
+```sh
+# Renew all certificates
+controlplane:~$ kubeadm certs renew all
+
+# Renew specific certificate
+controlplane:~$ kubeadm certs renew <certificate-name>
 ```
 
 ---
 
-## 10. Resource Management and Monitoring
+## 10. Control Plane Components
 
-### Find Pods by QoS Class
-
-```sh
-# Find BestEffort pods (first to be evicted)
-controlplane:~$ k get pods -A -o yaml | grep -i besteffort
-
-# Find Burstable or Guaranteed
-controlplane:~$ k get pods -A -o yaml | grep -i "burstable\|guaranteed"
-```
-
-### Metrics Server
-
-#### Nodes
+### API Server
 
 ```sh
-controlplane:~$ k top no # Show metrics for all nodes
-controlplane:~$ k top no <node-name> # Show metrics for specific node
+controlplane:~$ vim /etc/kubernetes/manifests/kube-apiserver.yaml
 ```
 
-#### Pods
+Check for invalid options or misconfigurations in the static pod manifest.
+
+### Kube Controller Manager
 
 ```sh
-controlplane:~$ k top po <name> -- containers # Show metrics for pod and its containers
-controlplane:~$ k top po --sort-by=cpu # Sort by pods which are consuming the most CPU
-controlplane:~$ k top po --sort-by=memory # Sort by pods which are consuming the most memory
+controlplane:~$ vim /etc/kubernetes/manifests/kube-controller-manager.yaml
 ```
+
+Verify configuration flags and ensure all options are valid.
+
+### Kubelet
+
+```sh
+controlplane:~$ vim /var/lib/kubelet/config.yaml
+# or check environment file
+controlplane:~$ vim /var/lib/kubeadm-flags.env
+```
+
+Review kubelet configuration and check for invalid flags.
 
 ---
 
