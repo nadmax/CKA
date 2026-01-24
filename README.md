@@ -434,6 +434,56 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
+#### Using Secret as Volume
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+spec:
+  containers:
+    - name: <container-name>
+      image: <image-name>
+      volumeMounts:
+        - name: <volume-name>
+          mountPath: <path>
+          readOnly: true
+  volumes:
+    - name: <volume-name>
+      secret:
+        secretName: <secret-name>
+```
+
+#### Using Secret as Environment Variables
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+spec:
+  containers:
+    - name: <container-name>
+      image: <image-name>
+      env:
+      - name: <ENV_VAR_NAME>
+        valueFrom:
+          secretKeyRef:
+            key: <key-name>
+            name: <secret-name>
+      - name: <ENV_VAR_NAME>
+        valueFrom:
+          secretKeyRef:
+            key: <key-name>
+            name: <secret-name>
+      - name: <ENV_VAR_NAME>
+        valueFrom:
+          secretKeyRef:
+            key: <key-name>
+            name: <secret-name>
+```
+
 #### Decoded an Existing Secret
 
 ```sh
