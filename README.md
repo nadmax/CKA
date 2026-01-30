@@ -34,7 +34,9 @@ Since the exam takes 2 hours, I recommend only using the following shortcuts.
 
 ```sh
 alias k=kubectl
-export do="--dry-run=client -o yaml" # Variable for generating YAML without creating resources
+
+# Environment variable for generating YAML file without creating resources
+export do="--dry-run=client -o yaml"
 ```
 
 ### Vim (Optional)
@@ -42,10 +44,9 @@ export do="--dry-run=client -o yaml" # Variable for generating YAML without crea
 If you would like to customize vim, here's what I recommend.
 
 ```sh
+# Sets expandtab, tabstop=2, shiftwidth=2 and line numbers
 echo "set et ts=2 sw=2 nu" >> ~/.vimrc
 ```
-
-This sets: `expandtab`, `tabstop=2`, `shiftwidth=2` and `line numbers`
 
 ---
 
@@ -54,10 +55,17 @@ This sets: `expandtab`, `tabstop=2`, `shiftwidth=2` and `line numbers`
 ### Rollback and Rollout
 
 ```sh
-k set image deployment <deploy-name> <image>=<image> <image>=<image>:<tag> # Change the image of our deployment
-k rollout history deploy apache # View rollout history
-k rollout undo deploy apache # Roll back to a previous version
-k rollout status deploy apache # View rollout status
+# Change the image of a deployment
+k set image deployment <deploy-name> <image>=<image> <image>=<image>:<tag>
+
+# View rollout history of a deployment
+k rollout history deploy <deploy-name>
+
+# Rollback a deployment to a previous version
+k rollout undo deploy <deploy-name>
+
+# View the rollout status of a deployment
+k rollout status deploy <deploy-name>
 ```
 
 ### Rollout Strategy
@@ -79,7 +87,8 @@ spec:
 ```
 
 ```sh
-k get deploy <deploy-name> -oyaml | grep strategy -A3 # Verify that changes were successful
+# Check if changes were successful
+k get deploy <deploy-name> -oyaml | grep strategy -A3
 ```
 
 ### Static Pods
@@ -375,9 +384,14 @@ k create service clusterip <service-name> --tcp=<port>:<target-port> -n <namespa
 #### Expose
 
 ```sh
-k expose pod <pod-name> --port=<port> --name=<service-name> # Create a service for a pod, which serves on a specific port with a specific name
-k expose rs <rs-name> --port=<port> --target-port=<target-port> --name=<service-name> # Create a service for a replicaset
-k expose deployment <deploy-name> --port=<port> --target-port=<target-port> --name=<service-name> # Create a service for a deployment
+# Create a service for a pod, which serves on a specific port with a specific name
+k expose pod <pod-name> --port=<port> --name=<service-name>
+
+# Create a service for a replicaset
+k expose rs <rs-name> --port=<port> --target-port=<target-port> --name=<service-name>
+
+# Create a service for a deployment
+k expose deployment <deploy-name> --port=<port> --target-port=<target-port> --name=<service-name>
 ```
 
 ### Ingress Resource
@@ -603,7 +617,8 @@ k taint nodes <node-name> key1=value1:NoSchedule
 This means that no pod will be able to schedule onto the node unless it has a matching toleration.
 
 ```sh
-k taint no <node-name> key1=value1:NoSchedule- # untaint node
+# Remove a node taint
+k taint no <node-name> key1=value1:NoSchedule-
 ```
 
 Toleration on a pod:
@@ -628,9 +643,14 @@ spec:
 ### Cordon and Drain
 
 ```sh
-k cordon <node-name> # Mark node as unschedulable
-k drain <node-name> --ignore-daemonsets # Evict all pods currently running on node (without --ignore-daemonsets, an error occurred)
-k uncordon <node-name> # Enable scheduling
+# Mark a node as unschedulable
+k cordon <node-name>
+
+# Evict all pods currently running on a node (an error occured without --ignore-daemonsets flag)
+k drain <node-name> --ignore-daemonsets
+
+# Enable scheduling
+k uncordon <node-name>
 ```
 
 ### Priority
@@ -718,16 +738,24 @@ k get pods -A -o yaml | grep -i "burstable\|guaranteed"
 #### Nodes
 
 ```sh
-k top no # Show metrics for all nodes
-k top no <node-name> # Show metrics for specific node
+# Show all nodes metrics
+k top no
+
+# Show specific node metrics
+k top no <node-name>
 ```
 
 #### Pods
 
 ```sh
-k top po <name> -- containers # Show metrics for pod and its containers
-k top po --sort-by=cpu # Sort by pods which are consuming the most CPU
-k top po --sort-by=memory # Sort by pods which are consuming the most memory
+# Show pod and its containers metrics
+k top po <name> -- containers
+
+# Sort by CPU consumption in descending order
+k top po --sort-by=cpu
+
+# Sort by memory consumption in descending order
+k top po --sort-by=memory
 ```
 
 ---
@@ -886,7 +914,9 @@ Review kubelet configuration and check for invalid flags.
 
 ```sh
 k logs <pod-name> -n <namespace>
-k logs <pod-name> -c <container-name>  # for multi-container pods
+
+# Useful for multi-container pods
+k logs <pod-name> -c <container-name>
 ```
 
 ### Common Issues
@@ -903,32 +933,66 @@ k logs <pod-name> -c <container-name>  # for multi-container pods
 ### Helm
 
 ```sh
-helm version # Verify if Helm is installed and check version
-helm repo add <repo-name> <url> # Add Helm repository
-helm repo update # Update repository to fetch the latest chart information
-helm search repo <repo-name> # Search for available repository charts
-helm show chart <repo-name>/<chart> # Get detailed information about a chart
-helm show values <repo-name>/<chart> # View the default values for a chart
-helm repo list # List the configured repositories
-helm list -A # List all Helm releases
-helm install <release-name> <repo-name>/<chart> --namespace <namespace> # Install chart in a namespace
-helm history <name> -n <namespace> # Get the release history
-helm get manifest <release-name> -n <namespace> # View generated Kubernetes manifests
-helm rollback <release-name> <revision-number> -n <namespace> # Rollback to a previous revision
-helm status <release-name> -n <namespace> # Check release installation status
-helm get values <release-name> -n <namespace> # Get values for a current release
-helm get all <release-name> -n <namespace> # Get all information about a release
-helm template <release-name> <repo-name>/<chart> -n <namespace> --version=<version> > install.yaml # Generate manifests with a specific version and save it to file
+# Verify if Helm is installed and check version
+helm version
+
+# Add Helm repository
+helm repo add <repo-name> <url>
+
+# Update repository to fetch the latest chart information
+helm repo update
+
+# Search for available repository charts
+helm search repo <repo-name>
+
+# Get detailed information about a chart
+helm show chart <repo-name>/<chart>
+
+# View the default values for a chart
+helm show values <repo-name>/<chart>
+
+# List the configured repositories
+helm repo list
+
+# List all Helm releases
+helm list -A
+
+# Install chart in a namespace
+helm install <release-name> <repo-name>/<chart> -n <namespace>
+
+# Install chart with specific value in a namespace
+helm install <release-name> <repo-name>/<chart> -n <namespace> --set var=value
+
+# Get the release history
+helm history <name> -n <namespace>
+
+# View generated Kubernetes manifests
+helm get manifest <release-name> -n <namespace>
+
+# Rollback to a previous revision
+helm rollback <release-name> <revision-number> -n <namespace>
+
+# Check release installation status
+helm status <release-name> -n <namespace>
+
+# Get values for a current release
+helm get values <release-name> -n <namespace>
+
+# Get all information about a release
+helm get all <release-name> -n <namespace>
+
+# Generate manifests with a specific version and save it to file
+helm template <release-name> <repo-name>/<chart> -n <namespace> --version=<version> > install.yml
 ```
 
 ### Kustomize
 
-Example of a basic `kustomization.yaml`
+Example of a basic `kustomization.yml`
 
 ```yml
 resources:
-- deployment.yaml
-- service.yaml
+- deployment.yml
+- service.yml
 labels:
     env: dev
     team: platform
@@ -941,19 +1005,19 @@ labels:
 ```sh
 .
 |-- base
-|   |-- deployment.yaml
-|   |-- kustomization.yaml
-|   `-- service.yaml
+|   |-- deployment.yml
+|   |-- kustomization.yml
+|   `-- service.yml
 `-- overlays
     |-- dev
-    |   |-- kustomization.yaml
-    |   `-- patch-deployment.yaml
+    |   |-- kustomization.yml
+    |   `-- patch-deployment.yml
     `-- prod
-        |-- kustomization.yaml
-        `-- patch-deployment.yaml
+        |-- kustomization.yml
+        `-- patch-deployment.yml
 ```
 
-`overlays/prod/kustomization.yaml`
+`overlays/prod/kustomization.yml`
 
 ```yml
 resources:
@@ -965,7 +1029,7 @@ namePrefix: -prod
 namespace: prod
 ```
 
-`overlays/prod/patch-deployment.yaml`
+`overlays/prod/patch-deployment.yml`
 
 ```yml
 apiVersion: apps/v1
