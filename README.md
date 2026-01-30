@@ -33,8 +33,8 @@ This cheatsheet is based on [CKA scenarios on Killercoda](https://killercoda.com
 Since the exam takes 2 hours, I recommend only using the following shortcuts.
 
 ```sh
-controlplane:~$ alias k=kubectl
-controlplane:~$ export do="--dry-run=client -o yaml" # Variable for generating YAML without creating resources
+alias k=kubectl
+export do="--dry-run=client -o yaml" # Variable for generating YAML without creating resources
 ```
 
 ### Vim (Optional)
@@ -42,7 +42,7 @@ controlplane:~$ export do="--dry-run=client -o yaml" # Variable for generating Y
 If you would like to customize vim, here's what I recommend.
 
 ```sh
-controlplane:~$ echo "set et ts=2 sw=2 nu" >> ~/.vimrc
+echo "set et ts=2 sw=2 nu" >> ~/.vimrc
 ```
 
 This sets: `expandtab`, `tabstop=2`, `shiftwidth=2` and `line numbers`
@@ -54,10 +54,10 @@ This sets: `expandtab`, `tabstop=2`, `shiftwidth=2` and `line numbers`
 ### Rollback and Rollout
 
 ```sh
-controlplane:~$ k set image deployment <deploy-name> <image>=<image> <image>=<image>:<tag> # Change the image of our deployment
-controlplane:~$ k rollout history deploy apache # View rollout history
-controlplane:~$ k rollout undo deploy apache # Roll back to a previous version
-controlplane:~$ k rollout status deploy apache # View rollout status
+k set image deployment <deploy-name> <image>=<image> <image>=<image>:<tag> # Change the image of our deployment
+k rollout history deploy apache # View rollout history
+k rollout undo deploy apache # Roll back to a previous version
+k rollout status deploy apache # View rollout status
 ```
 
 ### Rollout Strategy
@@ -79,7 +79,7 @@ spec:
 ```
 
 ```sh
-controlplane:~$ k get deploy <deploy-name> -oyaml | grep strategy -A3 # Verify that changes were successful
+k get deploy <deploy-name> -oyaml | grep strategy -A3 # Verify that changes were successful
 ```
 
 ### Static Pods
@@ -90,16 +90,16 @@ Static pods are managed by kubelet directly from manifest files.
 
 ```sh
 # Copy from source node
-controlplane:~$ scp <source-node>:/etc/kubernetes/manifests/<pod-manifest> .
+scp <source-node>:/etc/kubernetes/manifests/<pod-manifest> .
 
 # Remove from source (stops the pod)
-controlplane:~$ ssh <source-node> -- rm /etc/kubernetes/manifests/<pod-manifest>
+ssh <source-node> -- rm /etc/kubernetes/manifests/<pod-manifest>
 
 # Modify as needed (e.g., change name)
-controlplane:~$ vim <pod-manifest>
+vim <pod-manifest>
 
 # Move to Kubernetes manifests directory
-controlplane:~$ mv <pod-manifest> /etc/kubernetes/manifests/
+mv <pod-manifest> /etc/kubernetes/manifests/
 ```
 
 ### DaemonSet with HostPath
@@ -144,7 +144,7 @@ spec:
 #### From Literal
 
 ```sh
-controlplane:~$ k create configmap <name> --from-literal=<ENV>=<VALUE>
+k create configmap <name> --from-literal=<ENV>=<VALUE>
 ```
 
 #### Mounting ConfigMap as Volume
@@ -182,8 +182,8 @@ env:
 #### Verify ConfigMap Data
 
 ```sh
-controlplane:~$ k exec <pod-name> -- env | grep <ENV_VAR>
-controlplane:~$ k exec <pod-name> -- cat <mount-path>/<key-name>
+k exec <pod-name> -- env | grep <ENV_VAR>
+k exec <pod-name> -- cat <mount-path>/<key-name>
 ```
 
 ### Secrets
@@ -191,13 +191,13 @@ controlplane:~$ k exec <pod-name> -- cat <mount-path>/<key-name>
 #### From Literal
 
 ```sh
-controlplane:~$ k create secret <secret-type> <name> --from-literal=<ENV>=<VALUE>
+k create secret <secret-type> <name> --from-literal=<ENV>=<VALUE>
 ```
 
 #### From File
 
 ```sh
-controlplane:~$ k create secret <secret-type> <name> --from-file=<file_path>
+k create secret <secret-type> <name> --from-file=<file_path>
 ```
 
 #### Service Account Token
@@ -266,7 +266,7 @@ spec:
 #### Decoded an Existing Secret
 
 ```sh
-controlplane:~$ k -n <namespace-name> get secrets <secret-name> -ojsonpath='{.data.SECRET_NAME}' | base64 -d
+k -n <namespace-name> get secrets <secret-name> -ojsonpath='{.data.SECRET_NAME}' | base64 -d
 ```
 
 ---
@@ -369,15 +369,15 @@ spec:
 #### Create ClusterIP Service
 
 ```sh
-controlplane:~$ k create service clusterip <service-name> --tcp=<port>:<target-port> -n <namespace>
+k create service clusterip <service-name> --tcp=<port>:<target-port> -n <namespace>
 ```
 
 #### Expose
 
 ```sh
-controlplane:~$ k expose pod <pod-name> --port=<port> --name=<service-name> # Create a service for a pod, which serves on a specific port with a specific name
-controlplane:~$ k expose rs <rs-name> --port=<port> --target-port=<target-port> --name=<service-name> # Create a service for a replicaset
-controlplane:~$ k expose deployment <deploy-name> --port=<port> --target-port=<target-port> --name=<service-name> # Create a service for a deployment
+k expose pod <pod-name> --port=<port> --name=<service-name> # Create a service for a pod, which serves on a specific port with a specific name
+k expose rs <rs-name> --port=<port> --target-port=<target-port> --name=<service-name> # Create a service for a replicaset
+k expose deployment <deploy-name> --port=<port> --target-port=<target-port> --name=<service-name> # Create a service for a deployment
 ```
 
 ### Ingress Resource
@@ -597,13 +597,13 @@ spec:
 ### Taints and Toleration
 
 ```sh
-controlplane:~$ k taint nodes <node-name> key1=value1:NoSchedule
+k taint nodes <node-name> key1=value1:NoSchedule
 ```
 
 This means that no pod will be able to schedule onto the node unless it has a matching toleration.
 
 ```sh
-controlplane:~$ k taint no <node-name> key1=value1:NoSchedule- # untaint node
+k taint no <node-name> key1=value1:NoSchedule- # untaint node
 ```
 
 Toleration on a pod:
@@ -628,16 +628,16 @@ spec:
 ### Cordon and Drain
 
 ```sh
-controlplane:~$ k cordon <node-name> # Mark node as unschedulable
-controlplane:~$ k drain <node-name> --ignore-daemonsets # Evict all pods currently running on node (without --ignore-daemonsets, an error occurred)
-controlplane:~$ k uncordon <node-name> # Enable scheduling
+k cordon <node-name> # Mark node as unschedulable
+k drain <node-name> --ignore-daemonsets # Evict all pods currently running on node (without --ignore-daemonsets, an error occurred)
+k uncordon <node-name> # Enable scheduling
 ```
 
 ### Priority
 
 ```sh
 # Find pods by priority
-controlplane:~$ k get pods -n <namespace> -o yaml | grep -i priority -B 20
+k get pods -n <namespace> -o yaml | grep -i priority -B 20
 ```
 
 ```yml
@@ -707,10 +707,10 @@ spec:
 
 ```sh
 # Find BestEffort pods (first to be evicted)
-controlplane:~$ k get pods -A -o yaml | grep -i besteffort
+k get pods -A -o yaml | grep -i besteffort
 
 # Find Burstable or Guaranteed
-controlplane:~$ k get pods -A -o yaml | grep -i "burstable\|guaranteed"
+k get pods -A -o yaml | grep -i "burstable\|guaranteed"
 ```
 
 ### Metrics Server
@@ -718,16 +718,16 @@ controlplane:~$ k get pods -A -o yaml | grep -i "burstable\|guaranteed"
 #### Nodes
 
 ```sh
-controlplane:~$ k top no # Show metrics for all nodes
-controlplane:~$ k top no <node-name> # Show metrics for specific node
+k top no # Show metrics for all nodes
+k top no <node-name> # Show metrics for specific node
 ```
 
 #### Pods
 
 ```sh
-controlplane:~$ k top po <name> -- containers # Show metrics for pod and its containers
-controlplane:~$ k top po --sort-by=cpu # Sort by pods which are consuming the most CPU
-controlplane:~$ k top po --sort-by=memory # Sort by pods which are consuming the most memory
+k top po <name> -- containers # Show metrics for pod and its containers
+k top po --sort-by=cpu # Sort by pods which are consuming the most CPU
+k top po --sort-by=memory # Sort by pods which are consuming the most memory
 ```
 
 ---
@@ -747,27 +747,27 @@ controlplane:~$ k top po --sort-by=memory # Sort by pods which are consuming the
 
 ```sh
 # Create ServiceAccount
-controlplane:~$ k create serviceaccount <sa-name> -n <namespace>
+k create serviceaccount <sa-name> -n <namespace>
 
 # Create Role
-controlplane:~$ k create role <role-name> \
+k create role <role-name> \
   --verb=<verbs> \
   --resource=<resources> \
   -n <namespace>
 
 # Create RoleBinding
-controlplane:~$ k create rolebinding <binding-name> \
+k create rolebinding <binding-name> \
   --role=<role-name> \
   --serviceaccount=<namespace>:<sa-name> \
   -n <namespace>
 
 # Create ClusterRole
-controlplane:~$ k create clusterrole <role-name> \
+k create clusterrole <role-name> \
   --verb=<verbs> \
   --resource=<resources>
 
 # Create ClusterRoleBinding
-controlplane:~$ k create clusterrolebinding <binding-name> \
+k create clusterrolebinding <binding-name> \
   --clusterrole=<role-name> \
   --serviceaccount=<namespace>:<sa-name>
 ```
@@ -775,7 +775,7 @@ controlplane:~$ k create clusterrolebinding <binding-name> \
 #### Verify Permissions
 
 ```sh
-controlplane:~$ k auth can-i <verb> <resource> \
+k auth can-i <verb> <resource> \
   --as=system:serviceaccount:<namespace>:<sa-name> \
   -n <namespace>
 ```
@@ -787,7 +787,7 @@ controlplane:~$ k auth can-i <verb> <resource> \
 ### Initialize Cluster
 
 ```sh
-controlplane:~$ kubeadm init \
+kubeadm init \
   --kubernetes-version <version> \
   --pod-network-cidr <cidr>
 ```
@@ -795,8 +795,8 @@ controlplane:~$ kubeadm init \
 ### Join Node to Cluster
 
 ```sh
-controlplane:~$ kubeadm token create --print-join-command
-<worker-node-name>:~$ # copy/paste the output of 'kubeadm token create' command
+kubeadm token create --print-join-command
+# copy/paste the output of 'kubeadm token create' command below
 ```
 
 ### Cluster Upgrade
@@ -805,28 +805,28 @@ controlplane:~$ kubeadm token create --print-join-command
 
 ```sh
 # Check for new version available
-controlplane:~$ kubeadm upgrade plan
+kubeadm upgrade plan
 
 # Apply upgrade
-controlplane:~$ kubeadm upgrade apply <version>
+kubeadm upgrade apply <version>
 
 # Upgrade kubelet and kubectl
-controlplane:~$ apt install -y kubelet=<version> kubectl=<version>
+apt install -y kubelet=<version> kubectl=<version>
 ```
 
 #### Upgrade Worker Node
 
 ```sh
-controlplane:~$ ssh <worker-node-name>
+ ssh <worker-node-name>
 
 # Upgrade kubeadm first with the upgraded version
-<worker-node-name>:~$ apt install kubeadm=<version>
+<worker-node-name>: apt install kubeadm=<version>
 
 # Upgrade worker node
-<worker-node-name>:~$ kubeadm upgrade node
+<worker-node-name>: kubeadm upgrade node
 
 # Upgrade kubelet and kubectl
-<worker-node-name>:~$ apt install -y kubelet=<version> kubectl=<version>
+<worker-node-name>: apt install -y kubelet=<version> kubectl=<version>
 ```
 
 ### Certificate Management
@@ -834,17 +834,17 @@ controlplane:~$ ssh <worker-node-name>
 #### Check Certificate Expiration
 
 ```sh
-controlplane:~$ kubeadm certs check-expiration
+kubeadm certs check-expiration
 ```
 
 #### Renew Certificates
 
 ```sh
 # Renew all certificates
-controlplane:~$ kubeadm certs renew all
+kubeadm certs renew all
 
 # Renew specific certificate
-controlplane:~$ kubeadm certs renew <certificate-name>
+kubeadm certs renew <certificate-name>
 ```
 
 ---
@@ -854,7 +854,7 @@ controlplane:~$ kubeadm certs renew <certificate-name>
 ### API Server
 
 ```sh
-controlplane:~$ vim /etc/kubernetes/manifests/kube-apiserver.yaml
+vim /etc/kubernetes/manifests/kube-apiserver.yaml
 ```
 
 Check for invalid options or misconfigurations in the static pod manifest.
@@ -862,7 +862,7 @@ Check for invalid options or misconfigurations in the static pod manifest.
 ### Kube Controller Manager
 
 ```sh
-controlplane:~$ vim /etc/kubernetes/manifests/kube-controller-manager.yaml
+vim /etc/kubernetes/manifests/kube-controller-manager.yaml
 ```
 
 Verify configuration flags and ensure all options are valid.
@@ -870,9 +870,10 @@ Verify configuration flags and ensure all options are valid.
 ### Kubelet
 
 ```sh
-controlplane:~$ vim /var/lib/kubelet/config.yaml
+vim /var/lib/kubelet/config.yaml
+
 # or check environment file
-controlplane:~$ vim /var/lib/kubeadm-flags.env
+vim /var/lib/kubeadm-flags.env
 ```
 
 Review kubelet configuration and check for invalid flags.
@@ -884,8 +885,8 @@ Review kubelet configuration and check for invalid flags.
 ### Check Pod Logs
 
 ```sh
-controlplane:~$ k logs <pod-name> -n <namespace>
-controlplane:~$ k logs <pod-name> -c <container-name>  # for multi-container pods
+k logs <pod-name> -n <namespace>
+k logs <pod-name> -c <container-name>  # for multi-container pods
 ```
 
 ### Common Issues
@@ -902,22 +903,22 @@ controlplane:~$ k logs <pod-name> -c <container-name>  # for multi-container pod
 ### Helm
 
 ```sh
-controlplane:~$ helm version # Verify if Helm is installed and check version
-controlplane:~$ helm repo add <repo-name> <url> # Add Helm repository
-controlplane:~$ helm repo update # Update repository to fetch the latest chart information
-controlplane:~$ helm search repo <repo-name> # Search for available repository charts
-controlplane:~$ helm show chart <repo-name>/<chart> # Get detailed information about a chart
-controlplane:~$ helm show values <repo-name>/<chart> # View the default values for a chart
-controlplane:~$ helm repo list # List the configured repositories
-controlplane:~$ helm list -A # List all Helm releases
-controlplane:~$ helm install <release-name> <repo-name>/<chart> --namespace <namespace> # Install chart in a namespace
-controlplane:~$ helm history <name> -n <namespace> # Get the release history
-controlplane:~$ helm get manifest <release-name> -n <namespace> # View generated Kubernetes manifests
-controlplane:~$ helm rollback <release-name> <revision-number> -n <namespace> # Rollback to a previous revision
-controlplane:~$ helm status <release-name> -n <namespace> # Check release installation status
-controlplane:~$ helm get values <release-name> -n <namespace> # Get values for a current release
-controlplane:~$ helm get all <release-name> -n <namespace> # Get all information about a release
-controlplane:~$ helm template <release-name> <repo-name>/<chart> -n <namespace> --version=<version> > install.yaml # Generate manifests with a specific version and save it to file
+helm version # Verify if Helm is installed and check version
+helm repo add <repo-name> <url> # Add Helm repository
+helm repo update # Update repository to fetch the latest chart information
+helm search repo <repo-name> # Search for available repository charts
+helm show chart <repo-name>/<chart> # Get detailed information about a chart
+helm show values <repo-name>/<chart> # View the default values for a chart
+helm repo list # List the configured repositories
+helm list -A # List all Helm releases
+helm install <release-name> <repo-name>/<chart> --namespace <namespace> # Install chart in a namespace
+helm history <name> -n <namespace> # Get the release history
+helm get manifest <release-name> -n <namespace> # View generated Kubernetes manifests
+helm rollback <release-name> <revision-number> -n <namespace> # Rollback to a previous revision
+helm status <release-name> -n <namespace> # Check release installation status
+helm get values <release-name> -n <namespace> # Get values for a current release
+helm get all <release-name> -n <namespace> # Get all information about a release
+helm template <release-name> <repo-name>/<chart> -n <namespace> --version=<version> > install.yaml # Generate manifests with a specific version and save it to file
 ```
 
 ### Kustomize
@@ -938,7 +939,6 @@ labels:
 ##### With patchesStrategyMerge
 
 ```sh
-controlplane:~$ 
 .
 |-- base
 |   |-- deployment.yaml
