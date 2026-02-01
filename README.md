@@ -675,6 +675,8 @@ spec:
 
 ### Pod Affinity
 
+#### With `requiredDuringSchedulingIgnoredDuringExecution`
+
 ```yml
 apiVersion: v1
 kind: Pod
@@ -696,7 +698,7 @@ spec:
     name: <container-name>
 ```
 
-### Pod Anti-Affinity
+#### With `preferredDuringSchedulingIgnoredDuringExecution`
 
 ```yml
 apiVersion: v1
@@ -705,7 +707,34 @@ metadata:
   name: <pod-name>
 spec:
   affinity:
-    podAntiAffinity:
+    podAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: <1-100>
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: <label-key>
+              operator: In
+              values:
+              - <label-value>
+          topologyKey: kubernetes.io/hostname
+  containers:
+  - image: <image>
+    name: <container-name>
+```
+
+### Pod Anti-Affinity
+
+#### With `requiredDuringSchedulingIgnoredDuringExecution`
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+spec:
+  affinity:
+      podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
           matchExpressions:
@@ -714,6 +743,31 @@ spec:
             values:
             - <label-value>
         topologyKey: kubernetes.io/hostname
+  containers:
+  - image: <image>
+    name: <container-name>
+```
+
+#### With `preferredDuringSchedulingIgnoredDuringExecution`
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+spec:
+  affinity:
+    podAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: <1-100>
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: <label-key>
+              operator: In
+              values:
+              - <label-value>
+          topologyKey: kubernetes.io/hostname
   containers:
   - image: <image>
     name: <container-name>
