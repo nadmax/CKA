@@ -673,6 +673,53 @@ spec:
     image: <image>
 ```
 
+### Node Affinity
+
+#### With `requiredDuringSchedulingIgnoredDuringExecution`
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: <label-key>
+            operator: In
+            values:
+            - <label-value>
+  containers:
+  - image: <image>
+    name: <container-name>
+```
+
+#### With `preferredDuringSchedulingIgnoredDuringExecution`
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: <pod-name>
+spec:
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: <1-100>
+        preference:
+          matchExpressions:
+          - key: <label-key>
+            operator: In
+            values:
+            - <label-value>
+  containers:
+  - image: <image>
+    name: <container-name>
+```
+
 ### Pod Affinity
 
 #### With `requiredDuringSchedulingIgnoredDuringExecution`
