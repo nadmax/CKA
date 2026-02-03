@@ -56,7 +56,7 @@ echo "set et ts=2 sw=2 nu" >> ~/.vimrc
 
 ```sh
 # Change the image of a deployment
-k set image deployment <deploy-name> <image>=<image> <image>=<image>:<tag>
+k set image deployment <deploy-name> <container-name>=<image> <container-name>=<image>:<tag>
 
 # View rollout history of a deployment
 k rollout history deploy <deploy-name>
