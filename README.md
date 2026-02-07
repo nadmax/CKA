@@ -1004,7 +1004,7 @@ kubeadm init \
 
 ```sh
 kubeadm token create --print-join-command
-# copy/paste the output of 'kubeadm token create' command below
+# Copy/paste the output of 'kubeadm token create' command below
 ```
 
 ### Cluster Upgrade
@@ -1078,9 +1078,12 @@ Verify configuration flags and ensure all options are valid.
 ### Kubelet
 
 ```sh
+# Check kubelet service status
+systemctl status kubelet
+
 vim /var/lib/kubelet/config.yaml
 
-# or check environment file
+# Or check environment file
 vim /var/lib/kubelet/kubeadm-flags.env
 ```
 
