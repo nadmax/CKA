@@ -44,7 +44,7 @@ alias k=kubectl
 
 ```sh
 # Change the image of a deployment
-k set image deployment <deploy-name> <container-name>=<image> <container-name>=<image>:<tag>
+k set image deployment <deploy-name> <container-name>=<image>:<tag>
 
 # View rollout history of a deployment
 k rollout history deploy <deploy-name>
