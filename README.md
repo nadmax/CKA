@@ -410,7 +410,38 @@ spec:
   - host: "<hostname>"
     http:
       paths:
-      - path: /<path>
+      - path: <path>
+        pathType: Prefix
+        backend:
+          service:
+            name: <service-name>
+            port:
+              number: <port>
+```
+
+#### With TLS
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: <ingress-name>
+  namespace: <namespace>
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # Force HTTPS redirect
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx # Uses nginx implementation
+  tls:
+  - hosts:
+    - "<hostname>"
+    secretName: <secret-name>
+  rules:
+  - host: "<hostname>"
+    http:
+      paths:
+      - path: <path>
         pathType: Prefix
         backend:
           service:
@@ -439,18 +470,77 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: web-route
+  name: <httproute-name>
 spec:
   parentRefs:
-  - name: my-gateway
+  - name: <gateway-name>
   rules:
   - matches:
     - path: # Uses a path-based routing
         type: PathPrefix
-        value: /
+        value: <path>
     backendRefs: # References web service
-    - name: web
-      port: 80
+    - name: <service-name>
+      port: <port>
+```
+
+#### With TLS
+
+```yml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: <gateway-name>
+  namespace: <namespace>
+spec:
+  gatewayClassName: nginx # Uses nginx implementation
+  listeners:
+  - name: https
+    protocol: HTTPS
+    port: <port>
+    hostname: "<hostname>"
+    tls:
+      mode: Terminate  # Gateway terminates TLS
+      certificateRefs:
+      - name: <secret-name>  # Secret containing the certificate
+        kind: Secret
+  - name: http
+    protocol: HTTP
+    port: <port>
+    hostname: "<hostname>"
+```
+
+```yml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: <httproute-name>
+  namespace: <namespace>
+spec:
+  parentRefs:
+  - name: <gateway-name>
+    namespace: <namespace>
+  hostnames:
+  - "<hostname>"
+  rules:
+  # Optional: HTTP to HTTPS redirect
+  - matches:
+    - path:
+        type: PathPrefix
+        value: <path>
+    filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        statusCode: 301
+  # Main HTTPS route
+  - matches:
+    - path:
+        type: PathPrefix
+        value: <path>
+    backendRefs:
+    - name: <service-name>
+      port: <port>
 ```
 
 ### Network Policies
