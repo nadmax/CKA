@@ -270,13 +270,13 @@ k -n <namespace-name> get secrets <secret-name> -ojsonpath='{.data.SECRET_NAME}'
 
 ## 4. Storage
 
-### StorageClass
+### StorageClass (sc)
 
 ```yml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-    name: <storage-class-name>
+    name: <sc-name>
 provisioner: <provisioner-name>
 reclaimPolicy: Retain # Default value is Delete
 volumeBindingMode: WaitForFirstConsumer # Default value is Immediate
@@ -294,7 +294,7 @@ spec:
     storage: 1Gi
   accessModes:
     - ReadWriteOnce
-  storageClassName: "local-path"
+  storageClassName: "<sc-name>"
   persistentVolumeReclaimPolicy: Delete # Can be Recycle or Retain too
   hostPath:
     path: "<path>"
@@ -311,7 +311,7 @@ spec:
       storage: 1Gi
   accessModes:
     - ReadWriteOnce 
-  storageClassName: "local-path"
+  storageClassName: "<sc-name>"
   volumeName: <pv-name>
 ```
 
