@@ -28,24 +28,12 @@ This cheatsheet is based on [CKA scenarios on Killercoda](https://killercoda.com
 
 ## 1. Environment Setup
 
-### Shortcuts
+### Shortcut
 
-Since the exam takes 2 hours, I recommend only using the following shortcuts.
+Since the exam takes 2 hours, I recommend only using the following shortcut.
 
 ```sh
 alias k=kubectl
-
-# Environment variable for generating YAML file without creating resources
-export do="--dry-run=client -o yaml"
-```
-
-### Vim (Optional)
-
-If you would like to customize vim, here's what I recommend.
-
-```sh
-# Sets expandtab, tabstop=2, shiftwidth=2 and line numbers
-echo "set et ts=2 sw=2 nu" >> ~/.vimrc
 ```
 
 ---
