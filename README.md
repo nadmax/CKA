@@ -1081,7 +1081,7 @@ Verify configuration flags and ensure all options are valid.
 vim /var/lib/kubelet/config.yaml
 
 # or check environment file
-vim /var/lib/kubeadm-flags.env
+vim /var/lib/kubelet/kubeadm-flags.env
 ```
 
 Review kubelet configuration and check for invalid flags.
