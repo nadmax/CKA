@@ -278,7 +278,8 @@ kind: StorageClass
 metadata:
     name: <storage-class-name>
 provisioner: <provisioner-name>
-reclaimPolicy: Retain
+reclaimPolicy: Retain # Default value is Delete
+volumeBindingMode: WaitForFirstConsumer # Default value is Immediate
 ```
 
 ### PV and PVC
